@@ -2,6 +2,7 @@ import pandas
 import random
 import numpy as np
 from matplotlib import pyplot as plt
+from matplotlib.colors import is_color_like
 
 with open("datasets/comic_characters.csv") as file:
     data = pandas.read_csv(file)
@@ -111,6 +112,7 @@ for index, value in enumerate(bg_numbers):
     else:
         temp_color = "navy"
     plt.text(index, value, f"{value}% ", color=temp_color)
+plt.savefig("Exported-Graphs/Character-Death-Rate.png")
 plt.show()
 
 # _____________________ Ranking Characters by appearances
@@ -118,8 +120,9 @@ plt.show()
 
 # Checks validity of input
 while True:
-    TOP_NUM = input("Give an integer to sort by (e.g. 5 for top 5, 10 for top 10,"
-                    " etc): ")
+    TOP_NUM = 5
+    # TOP_NUM = input("Give an integer to sort by (e.g. 5 for top 5, 10 for top 10,"
+    #                 " etc): ")
     try:
         TOP_NUM = int(TOP_NUM)
     except ValueError:
@@ -180,6 +183,7 @@ for item in top_x_names:
 top_percentage = round((top_percentage / total_num_of_appearances) * 100)
 plt.pie(y, labels=label)
 plt.title(f"The top {top_percentage}% of appearances")
+plt.savefig("Exported-Graphs/top-x-appearances")
 plt.show()
 
 top_x_as_string = f"Top {TOP_NUM} by order of appearance. \n"
@@ -263,6 +267,7 @@ plt.plot(x, y)
 plt.title("Number of character debuts per year")
 plt.xlabel("Years")
 plt.ylabel("Character debuts")
+plt.savefig(f"Exported-Graphs/Character-Debuts-Per-Year")
 plt.show()
 
 # _____________________ Pie chart to compare ratio of heroes in existence to villains (one for each universe)
@@ -278,6 +283,7 @@ for item in label:
     temp_indx += 1
 plt.pie(y, labels=label)
 plt.title(f"Marvel Hero-to-Villain Ratio")
+plt.savefig(f"Exported-Graphs/{str(plt.title)}.png")
 plt.show()
 
 # DC Side
@@ -290,6 +296,7 @@ for item in label:
     temp_indx += 1
 plt.pie(y, labels=label)
 plt.title(f"DC Hero-to-Villain Ratio")
+plt.savefig(f"Exported-Graphs/{str(plt.title)}.png")
 plt.show()
 
 # Overall
@@ -306,5 +313,122 @@ for item in label:
 
 plt.pie(y, labels=label)
 plt.title(f"Overall Character ratio")
+plt.savefig(f"Exported-Graphs/{str(plt.title)}.png")
 plt.show()
 
+
+# Sort through common traits based on given alignment and universe:
+def find_traits(almt, uni):
+    eye_colors = {}
+    hair_colors = {}
+    genders = {}
+
+    # ----- Funnel through every character
+    # ---- If they match both alignment and universe then store their traits in dictionary
+
+    for char in characters_names:
+        ref_index = characters_names.index(char)
+        if alignment[ref_index] == almt and universe[ref_index] == uni:
+            chars_eyes = eyes[ref_index]
+            chars_hair = hair[ref_index]
+            chars_gen = sex[ref_index]
+
+            if chars_eyes in eye_colors:
+                eye_colors[chars_eyes] += 1
+            else:
+                eye_colors[chars_eyes] = 1
+
+            if chars_hair in hair_colors:
+                hair_colors[chars_hair] += 1
+            else:
+                hair_colors[chars_hair] = 1
+
+            if chars_gen in genders:
+                genders[chars_gen] += 1
+            else:
+                genders[chars_gen] = 1
+
+    return [eye_colors, hair_colors, genders]
+
+
+# Shows AND Saves all graphs to exported graphs folder
+def graph_traits(found_traits_list, curr_almt, curr_uni):
+    for trait_dict in found_traits_list:
+        listindex = found_traits_list.index(trait_dict)
+
+        if listindex == 0:
+            trait = "Eye"
+        elif listindex == 1:
+            trait = "Hair"
+        else:
+            trait = "Gender"
+
+        trait_names = [thename for thename in trait_dict]
+        trait_counts = [thevalue for thevalue in trait_dict.values()]
+
+        while len(trait_names) > 10:
+            trait_names.pop(-1)
+            trait_counts.pop(-1)
+        for haircolor in trait_names:
+            if haircolor == "No" and trait == "Hair":
+                trait_names[trait_names.index(haircolor)] = "No Hair"
+
+        plt.figure(figsize=(40, 5))
+        plt.gca().tick_params(axis='both', which='major', pad=15)
+
+        colors_for_graph = []
+        for traits_name in trait_names:
+            if is_color_like(traits_name) and item.lower() != "white":
+                colors_for_graph.append(traits_name)
+            else:
+                colors_for_graph.append("lightgray")
+
+        plt.bar(trait_names, trait_counts, color=colors_for_graph)
+        if trait == "Eye" or trait == "Hair":
+            plt.title(f"Top 10 {trait} colors for {curr_uni} {curr_almt}")
+        else:
+            plt.title(f"Top 10 {trait}s for {curr_uni} {curr_almt}")
+
+        # Shows percentages for each bar
+        curr_indx = 0
+        for keyy, valuee in enumerate(trait_counts):
+            plt.text(keyy, value, value, color=colors_for_graph[curr_indx])
+            curr_indx += 1
+        plt.savefig(f"Exported-Graphs/{curr_uni}-{curr_almt}-{trait}.png")
+        plt.show()
+
+
+# Retrieve only the most common trait found based on given Alignment and Universe
+
+def most_comm_traits(almt, uni):
+    traits = find_traits(almt, uni)
+    most_common = {
+        "Eye Color": max(traits[0], key=traits[0].get),
+        "Eye Count": max(traits[0].values()),
+        "Hair Color": max(traits[1], key=traits[1].get),
+        "Hair Count": max(traits[1].values()),
+        "Genders": max(traits[2], key=traits[2].get),
+        "Gender Count": max(traits[2].values()),
+    }
+    if almt == "Good":
+        almt = "Hero"
+    elif almt == "Bad":
+        almt = "Villain"
+    else:
+        almt += " character"
+
+    print(f"Most common traits for a {uni} {almt}, is a {most_common['Genders']} with "
+          f"{most_common['Eye Color']} eyes, and {most_common['Hair Color']} hair.")
+
+    return most_common
+
+
+# Sort through most common traits for Marvel Heroes & Villains
+
+graph_traits(find_traits("Good", "Marvel"), "Heroes", "Marvel")
+graph_traits(find_traits("Bad", "Marvel"), "Villains", "Marvel")
+
+# Sort through most common traits for DC Heroes & Villains
+
+graph_traits(find_traits("Good", "DC"), "Heroes", "DC")
+graph_traits(find_traits("Bad", "DC"), "Villains", "DC")
