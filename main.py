@@ -283,7 +283,7 @@ for item in label:
     temp_indx += 1
 plt.pie(y, labels=label)
 plt.title(f"Marvel Hero-to-Villain Ratio")
-plt.savefig(f"Exported-Graphs/{str(plt.title)}.png")
+plt.savefig(f"Exported-Graphs/Marvel-Hero-to-Villain-Ratio.png")
 plt.show()
 
 # DC Side
@@ -296,7 +296,7 @@ for item in label:
     temp_indx += 1
 plt.pie(y, labels=label)
 plt.title(f"DC Hero-to-Villain Ratio")
-plt.savefig(f"Exported-Graphs/{str(plt.title)}.png")
+plt.savefig(f"Exported-Graphs/DC-Hero-to-Villain-Ratio.png")
 plt.show()
 
 # Overall
@@ -313,7 +313,7 @@ for item in label:
 
 plt.pie(y, labels=label)
 plt.title(f"Overall Character ratio")
-plt.savefig(f"Exported-Graphs/{str(plt.title)}.png")
+plt.savefig(f"Exported-Graphs/Overall-Character-Ratio.png")
 plt.show()
 
 
@@ -369,16 +369,17 @@ def graph_traits(found_traits_list, curr_almt, curr_uni):
         while len(trait_names) > 10:
             trait_names.pop(-1)
             trait_counts.pop(-1)
-        for haircolor in trait_names:
-            if haircolor == "No" and trait == "Hair":
-                trait_names[trait_names.index(haircolor)] = "No Hair"
+        # Appears nicer when a trait says "None" rather than "No"
+        for atrait in trait_names:
+            if atrait == "No":
+                trait_names[trait_names.index(atrait)] = "None"
 
         plt.figure(figsize=(40, 5))
         plt.gca().tick_params(axis='both', which='major', pad=15)
 
         colors_for_graph = []
         for traits_name in trait_names:
-            if is_color_like(traits_name) and item.lower() != "white":
+            if is_color_like(traits_name) and traits_name.lower() != "white":
                 colors_for_graph.append(traits_name)
             else:
                 colors_for_graph.append("lightgray")
@@ -387,7 +388,7 @@ def graph_traits(found_traits_list, curr_almt, curr_uni):
         if trait == "Eye" or trait == "Hair":
             plt.title(f"Top 10 {trait} colors for {curr_uni} {curr_almt}")
         else:
-            plt.title(f"Top 10 {trait}s for {curr_uni} {curr_almt}")
+            plt.title(f"Top {trait}s for {curr_uni} {curr_almt}")
 
         # Shows percentages for each bar
         curr_indx = 0
@@ -432,3 +433,11 @@ graph_traits(find_traits("Bad", "Marvel"), "Villains", "Marvel")
 
 graph_traits(find_traits("Good", "DC"), "Heroes", "DC")
 graph_traits(find_traits("Bad", "DC"), "Villains", "DC")
+
+# Returns most appeared characters that have all the most common traits:
+trait_matches = {}
+for aname in characters_names:
+    curr_index = characters_names.index(aname)
+    if hair[curr_index].lower() == "black" and eyes[curr_index].lower() == "blue" and sex[curr_index].lower() == "male":
+        trait_matches[aname] = appearances[curr_index]
+ordered_trait_matches = dict(sorted(trait_matches.items(), key=lambda item: item[1], reverse=True))
